@@ -31,3 +31,4 @@ hs_err_pid*
 example-cooperative-vehicle-infrastructure
 build
 pypcd
+mmdet3d.egg-info
