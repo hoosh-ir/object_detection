@@ -25,3 +25,9 @@ hs_err_pid*
 # temporary file
 *.pyc
 *.so
+
+*zip
+*.pkl
+example-cooperative-vehicle-infrastructure
+build
+pypcd

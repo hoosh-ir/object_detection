@@ -1,116 +1,113 @@
-![Python 3.7](https://img.shields.io/badge/python-3.7-green.svg)
-
-# FFNET: Flow-Based Feature Fusion for VEHICLE-INFRASTRUCTURE COOPERATIVE 3D OBJECT DETECTION
-
-<!-- ![image](resources/image.png) -->
-<div align="center">
-  <img src="./resources/FFNET-OVERVIEW.png" height="400">
-</div>
-<p align="center">
-  Figure 1: FFNET OVERVIEW.
-</p>
-
-### [Project page](https://github.com/haibao-yu/FFNet-VIC3D) | [Paper](https://arxiv.org/abs/2311.01682) |
-
-FFNET: Flow-Based Feature Fusion for VEHICLE-INFRASTRUCTURE COOPERATIVE 3D OBJECT DETECTION.<br>
-[Haibao Yu](https://scholar.google.com/citations?user=JW4F5HoAAAAJ), Yingjuan Tang, [Enze Xie](https://xieenze.github.io/), Jilei Mao, [Ping Luo](http://luoping.me/), and [Zaiqing Nie](https://air.tsinghua.edu.cn/en/info/1046/1192.htm) <br>
-NeurIPS 2023.
-
-This repository contains the official Pytorch implementation of training & evaluation code and the pretrained models for [FFNET](https://openreview.net/forum?id=ZLfD0cowleE).
-
-FFNET is a simple, efficient and powerful VIC3D Object Detection method, as shown in Figure 1.
-
-We use [MMDetection3D v0.17.1](https://github.com/open-mmlab/mmdetection3d/tree/v0.17.1) as the codebase. <br>
-We evaluation all the models with [OpenDAIRV2X](https://github.com/AIR-THU/DAIR-V2X).
 
 
-## Installation
-For more information about installing mmdet3d, please refer to the guidelines in [MMDetectionn3D v0.17.1](https://github.com/open-mmlab/mmdetection3d/tree/v0.17.1).
-For more information about installing OpenDAIRV2X, please refer to the guideline in [OpenDAIRV2X](https://github.com/AIR-THU/DAIR-V2X).
+Code for inference on MVXNet model trained on [DAIR-V2X-I](https://thudair.baai.ac.cn/roadtest) (infrastructure-side 3d object detection)
 
+This repo is based on **[DAIR-V2X](https://github.com/AIR-THU/DAIR-V2X)**, **[FFNet-VIC3D](https://github.com/haibao-yu/FFNet-VIC3D)**, [mmdetection3d](https://github.com/open-mmlab/mmdetection3d) with almost no modifications:) 
 
-Other requirements:
-```pip install --upgrade git+https://github.com/klintan/pypcd.git```
+### System Requirements
 
-An example (works for me): ```CUDA 11.1``` and  ```pytorch 1.9.0``` 
+1) ## LLVM C++ (For visualization in Open3D)
 
+```bash
+sudo apt install libc++-dev
 ```
-pip install torchvision==0.10.0
+
+2) CUDA Toolkit 11.1.0 ([Installation guild](https://developer.nvidia.com/cuda-11.1.0-download-archive))
+
+### Create environment
+
+```bash
+conda create --name mvxnet python==3.7
+conda activate object_detection
+pip install torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio==0.9.0 -f https://download.pytorch.org/whl/torch_stable.html
 pip install mmcv-full==1.3.14
 pip install mmdet==2.14.0
 pip install mmsegmentation==0.14.1
-cd FFNET-VIC3D && pip install -e . --user
+pip install -e . --user
+pip install open3d==0.11
+git clone https://github.com/klintan/pypcd.git
+cd pypcd
+python setup.py install
+cd ..
 ```
 
-## Data Preparation
-We train and evaluate the models on DAIR-V2X dataset. For downloading DAIR-V2X dataset, please refer to the guidelines in [DAIR-V2X](https://thudair.baai.ac.cn/cooptest).
-After downloading the dataset, we should preprcocess the dataset as the guidelines in [data_preprocess](data/dair-v2x/README.md).
-We provide the preprocessed example data [example-cooperative-vehicle-infrastructure](https://drive.google.com/file/d/1y8bGwI63TEBkDEh2JU_gdV7uidthSnoe/view?usp=sharing), you can download and decompress it under './data/dair-v2x'.
+### Download pre-trained MVXNet for infrastructure data
 
-
-## Evaluation
-
-Step 1: Download `trained weights`. 
-- FFNET trained on DAIR-V2X
-([FFNET Trainded Checkpoint](https://drive.google.com/file/d/1eX2wZ7vSxq8y9lAyjHyrmBQ30qNHcFC6/view?usp=sharing) | [FFNET without prediction](https://drive.google.com/file/d/14ujtkGVMGGdvHnmEAUDArny6HKbYM_ye/view?usp=sharing) 
-| [FFNET-V2 without prediction](https://drive.google.com/file/d/1_-C4MfUeC-6MXPDZlx6LTM48Tl8gdZpR/view?usp=sharing))
-
-- FFNET trained on V2X-Seq-SPD
-([ffnet-v2x-spd.pth](https://drive.google.com/file/d/1k-WIcGvGY4YF02ITMTTIDdPblA2cjaji/view?usp=sharing) | [ffnet-pretrained-v2x-spd.pth](https://drive.google.com/file/d/1LZACi8OLEVvFqz7bjsTwo0-Y_Imbp4sK/view?usp=sharing))
-
-Step 2: Inference
-- Please refer [OpenDAIRV2X](https://github.com/AIR-THU/DAIR-V2X/tree/main/configs/vic3d/middle-fusion-pointcloud/ffnet) for evaluating FFNet with OpenDAIRV2X on DAIR-V2X-C dataset.
-
-- Example: evaluate ```FFNET``` on ```DAIR-V2X-C-Example``` with 100ms latency:
-
-  ```
-  # modify the DATA to point to DAIR-V2X-C-Example in script ${OpenDAIRV2X_root}/v2x/scripts/lidar_feature_flow.sh
-  # bash scripts/lidar_feature_flow.sh [YOUR_CUDA_DEVICE] [YOUR_FFNET_WORKDIR] [DELAY_K] 
-  cd ${OpenDAIRV2X_root}/v2x
-  bash scripts/lidar_feature_flow.sh 0 /home/yuhaibao/FFNet-VIC3D 1
-  ```
-
-## Training
-
-Step1: Train the basemodel on ```DAIR-V2X``` without latency
-- Single-gpu training
-  ```
-  cd ${FFNET-VIC_repo}
-  export PYTHONPATH=$PYTHONPATH:./
-  CUDA_VISIBLE_DEVICES=${GPU_ID} python tools/train.py configs/config_basemodel.py
-  ```
-- or, Multi-gpu Training
-  ```
-  cd ${FFNET-VIC_repo}
-  export PYTHONPATH=$PYTHONPATH:./
-  CUDA_VISIBLE_DEVICES=${GPU_IDs} bash tools/dist_train.sh configs/config_basemodel.py ${GPU_NUM}
-  ```
-
-Step 2: Put the trained basemodel in a folder ```ffnet_work_dir/release-checkpoints``` as ```ffnet_work_dir/release-checkpoints/ffnet-pretrained.pth```.
-
-Step 3: Train ```FFNET``` on ```DAIR-V2X``` with latency
-- Single-gpu training (Not supported multi-GPU training now)
-  ```
-  cd ${FFNET-VIC_repo}
-  export PYTHONPATH=$PYTHONPATH:./
-  CUDA_VISIBLE_DEVICES=${GPU_ID} python tools/train.py configs/config_ffnet.py
-  ```
-
-## Citation
-```latex
-@inproceedings{yu2023ffnet,
-  title={Flow-Based Feature Fusion for Vehicle-Infrastructure Cooperative 3D Object Detection},
-  author={Yu, Haibao and Tang, Yingjuan and Xie, Enze and Mao, Jilei and Luo, Ping and Nie, Zaiqing},
-  booktitle={Advances in Neural Information Processing Systems},
-  year={2023}
-}
+```bash
+# install gdown with 'pip install gdown'
+gdown https://drive.google.com/file/d/1dtTEuCzsj1I69vz6Hy2I6KZb515R-zoZ/view?usp=sharing --fuzzy -O checkpoints
 ```
 
-```latex
-@inproceedings{yu2023ffnet,
-  title={Vehicle-Infrastructure Cooperative 3D Object Detection via Feature Flow Prediction},
-  author={Yu, Haibao and Tang, Yingjuan and Xie, Enze and Mao, Jilei and Yuan, Jirui and Luo, Ping and Nie, Zaiqing},
-  booktitle={https://arxiv.org/abs/2303.10552},
-  year={2023}
-}
-```
+### Inference on DAIV-V2I
+
+1) Download DAIR-V2X-Example from [here](https://drive.google.com/file/d/1y8bGwI63TEBkDEh2JU_gdV7uidthSnoe/view?usp=drive_link) and unzip:
+
+   ```bash
+   # install gdown with 'pip install gdown'
+   gdown https://drive.google.com/file/d/1y8bGwI63TEBkDEh2JU_gdV7uidthSnoe/view?usp=drive_link --fuzzy
+   unzip example-cooperative-vehicle-infrastructure.zip
+   ```
+
+2)  Convert DAIR-V2I to KITTI-format data and prepare it for MMDet3D
+
+   ```bash
+   python tools/dataset_converter/dair2kitti.py --source-root example-cooperative-vehicle-infrastructure/infrastructure-side --target-root example-cooperative-vehicle-infrastructure/infrastructure-side --split-path ./data/dair-v2x/split_datas/example-single-infrastructure-split-data.json --label-type lidar --sensor-view infrastructure
+   
+   # Prepare KITTI dataset for MMDet3d
+   python tools/create_data.py kitti --root-path example-cooperative-vehicle-infrastructure/infrastructure-side --out-dir example-cooperative-vehicle-infrastructure/infrastructure-side --extra-tag kitti
+   ```
+
+3) Run Inference
+
+   You can evaluate your model on the validation set by visualizing results or computing 3D detection metrics
+
+   ```bash
+   # visualize
+   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/checkpointsp019_9v_tmp --show --show-dir out
+   # Compute metrics
+   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/checkpointsp019_9v_tmp --eval bbox
+   ```
+
+   * The first argument of the above commands is the config of mvxnet model and the second is the path to the downloaded pre-trained model.
+
+   **Inference on custom dataset**
+
+1. Provide your data in KITTI format (see [here](https://s3.eu-central-1.amazonaws.com/avg-kitti/devkit_object.zip) and [here](https://mmdetection3d.readthedocs.io/en/v0.17.1/datasets/kitti_det.html)) like this:
+
+   ```
+   ├── data
+   │   ├── kitti
+   │   │   ├── ImageSets
+   │   │   ├── testing
+   │   │   │   ├── calib
+   │   │   │   ├── image_2
+   │   │   │   ├── velodyne
+   │   │   ├── training
+   │   │   │   ├── calib
+   │   │   │   ├── image_2
+   │   │   │   ├── label_2
+   │   │   │   ├── velodyne
+   ```
+
+2.  Prepare KITTI dataset for MMDet3d
+
+   ```bash
+   # Prepare KITTI dataset for MMDet3d
+   python tools/create_data.py kitti --root-path {path-to-data} --out-dir {path-to-data} --extra-tag kitti
+   ```
+
+3. Change 'data_root' variable in ''configs/sv3d-inf/mvxnet/trainval_config.py'  to path to your dataset
+
+
+4) Run Inference
+
+   ```bash
+   # visualize
+   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/checkpointsp019_9v_tmp --show --show-dir out
+   # Compute metrics
+   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/checkpointsp019_9v_tmp --eval bbox
+   ```
+
+TODO:
+
+- [ ] Add training scripts and new weights 
