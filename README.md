@@ -18,11 +18,12 @@ sudo apt install libc++-dev
 
 ```bash
 conda create --name mvxnet python==3.7
-conda activate object_detection
+conda activate mvxnet
 pip install torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio==0.9.0 -f https://download.pytorch.org/whl/torch_stable.html
 pip install mmcv-full==1.3.14
 pip install mmdet==2.14.0
 pip install mmsegmentation==0.14.1
+cd object_detection
 pip install -e . --user
 pip install open3d==0.11
 git clone https://github.com/klintan/pypcd.git
@@ -35,7 +36,7 @@ cd ..
 
 ```bash
 # install gdown with 'pip install gdown'
-gdown https://drive.google.com/file/d/1dtTEuCzsj1I69vz6Hy2I6KZb515R-zoZ/view?usp=sharing --fuzzy -O checkpoints
+gdown https://drive.google.com/file/d/1dtTEuCzsj1I69vz6Hy2I6KZb515R-zoZ/view?usp=sharing --fuzzy -O checkpoints/mvxnet.pkl
 ```
 
 ### Inference on DAIV-V2I
@@ -63,9 +64,9 @@ gdown https://drive.google.com/file/d/1dtTEuCzsj1I69vz6Hy2I6KZb515R-zoZ/view?usp
 
    ```bash
    # visualize
-   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/checkpointsp019_9v_tmp --show --show-dir out
+   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/mvxnet.pkl --show --show-dir out
    # Compute metrics
-   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/checkpointsp019_9v_tmp --eval bbox
+   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/mvxnet.pkl --eval bbox
    ```
 
    * The first argument of the above commands is the config of mvxnet model and the second is the path to the downloaded pre-trained model.
@@ -74,7 +75,8 @@ gdown https://drive.google.com/file/d/1dtTEuCzsj1I69vz6Hy2I6KZb515R-zoZ/view?usp
 
 1. Provide your data in KITTI format (see [here](https://s3.eu-central-1.amazonaws.com/avg-kitti/devkit_object.zip) and [here](https://mmdetection3d.readthedocs.io/en/v0.17.1/datasets/kitti_det.html)) like this:
 
-   ```
+   ```pip install mmcv-full==1.3.14
+
    ├── data
    │   ├── kitti
    │   │   ├── ImageSets
@@ -103,9 +105,9 @@ gdown https://drive.google.com/file/d/1dtTEuCzsj1I69vz6Hy2I6KZb515R-zoZ/view?usp
 
    ```bash
    # visualize
-   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/checkpointsp019_9v_tmp --show --show-dir out
+   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/mvxnet.pkl --show --show-dir out
    # Compute metrics
-   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/checkpointsp019_9v_tmp --eval bbox
+   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/mvxnet.pkl --eval bbox
    ```
 
 TODO:
