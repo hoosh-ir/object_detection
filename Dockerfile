@@ -87,11 +87,6 @@ RUN mkdir -p checkpoints \
     && gdown --fuzzy https://drive.google.com/uc?id=1dtTEuCzsj1I69vz6Hy2I6KZb515R-zoZ \
              -O checkpoints/mvxnet.pkl
 
-# 10. (Optional) Remove build tools to slim the image
-RUN apt-get purge -y build-essential clang llvm libc++-dev ninja-build \
-    && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
-
 # Expose SSH port
 EXPOSE 22
 
