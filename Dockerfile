@@ -74,7 +74,6 @@ RUN mkdir -p checkpoints \
     && /opt/conda/bin/conda run -n mvxnet gdown --fuzzy https://drive.google.com/uc?id=1dtTEuCzsj1I69vz6Hy2I6KZb515R-zoZ \
              -O checkpoints/mvxnet.pkl
 
-# Ensure conda activates on SSH login for root user
 RUN cat << 'EOF' >> /root/.bashrc
 
 # >>> conda initialize >>>
@@ -91,6 +90,15 @@ fi
 unset __conda_setup
 conda activate mvxnet
 EOF
+
+RUN cat << 'EOF' >> /root/.bash_profile
+
+# Source .bashrc to ensure conda activates on SSH login
+if [ -f ~/.bashrc ]; then
+    . ~/.bashrc
+fi
+EOF
+
 
 RUN cat << 'EOF' >> /root/.bash_profile
 
