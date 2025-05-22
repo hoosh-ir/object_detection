@@ -26,21 +26,19 @@ RUN curl https://bootstrap.pypa.io/pip/3.7/get-pip.py -o get-pip.py \
 
 # Create virtualenv with python3.7 explicitly
 ENV VENV_DIR=/opt/venv
-RUN python3.7 -m venv $VENV_DIR \
-    && source $VENV_DIR/bin/activate \
-    && pip install --upgrade pip \
-    && pip install --no-cache-dir \
-        torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio==0.9.0 \
-          -f https://download.pytorch.org/whl/torch_stable.html \
-    && pip install --no-cache-dir \
-        mmcv-full==1.3.14 \
-          -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9.0/index.html \
-    && pip install --no-cache-dir \
-        mmdet==2.14.0 \
-        mmsegmentation==0.14.1 \
-        open3d==0.11.0 \
-        gdown \
-    && deactivate
+RUN python3.7 -m venv $VENV_DIR && \
+    $VENV_DIR/bin/pip install --upgrade pip && \
+    $VENV_DIR/bin/pip install --no-cache-dir \
+      torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio==0.9.0 \
+      -f https://download.pytorch.org/whl/torch_stable.html && \
+    $VENV_DIR/bin/pip install --no-cache-dir \
+      mmcv-full==1.3.14 \
+      -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9.0/index.html && \
+    $VENV_DIR/bin/pip install --no-cache-dir \
+      mmdet==2.14.0 \
+      mmsegmentation==0.14.1 \
+      open3d==0.11.0 \
+      gdown
 
 
 # Put venv's python & scripts first in PATH
