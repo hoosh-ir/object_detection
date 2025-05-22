@@ -74,31 +74,23 @@ RUN mkdir -p checkpoints \
     && /opt/conda/bin/conda run -n mvxnet gdown --fuzzy https://drive.google.com/uc?id=1dtTEuCzsj1I69vz6Hy2I6KZb515R-zoZ \
              -O checkpoints/mvxnet.pkl
 
-# Ensure conda activates on SSH login for root user
-RUN cat << 'EOF' >> /root/.bashrc
+# Setup conda initialization script and shell profiles
+RUN echo '#!/bin/bash\n\
+__conda_setup="$('/opt/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"\n\
+if [ $? -eq 0 ]; then\n\
+    eval "$__conda_setup"\n\
+else\n\
+    if [ -f /opt/conda/etc/profile.d/conda.sh ]; then\n\
+        . /opt/conda/etc/profile.d/conda.sh\n\
+    else\n\
+        export PATH=/opt/conda/bin:$PATH\n\
+    fi\n\
+fi\n\
+unset __conda_setup\n\
+conda activate mvxnet' > /root/conda_init.sh && chmod +x /root/conda_init.sh
 
-# >>> conda initialize >>>
-__conda_setup="$('/opt/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f /opt/conda/etc/profile.d/conda.sh ]; then
-        . /opt/conda/etc/profile.d/conda.sh
-    else
-        export PATH=/opt/conda/bin:$PATH
-    fi
-fi
-unset __conda_setup
-conda activate mvxnet
-EOF
-
-RUN cat << 'EOF' >> /root/.bash_profile
-
-# Source .bashrc to ensure conda activates on SSH login
-if [ -f ~/.bashrc ]; then
-    . ~/.bashrc
-fi
-EOF
+RUN echo 'source /root/conda_init.sh' >> /root/.bashrc && \
+    echo 'if [ -f ~/.bashrc ]; then . ~/.bashrc; fi' >> /root/.bash_profile
 
 EXPOSE 22
 
