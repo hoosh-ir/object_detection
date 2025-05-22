@@ -84,15 +84,3 @@ RUN mkdir -p checkpoints \
 RUN apt-get purge -y build-essential clang llvm libc++-dev ninja-build \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
-
-# 11. (Optional) Switch to non-root user
-RUN useradd -m -s /bin/bash app \
-    && chown -R app:app /workspace
-USER app
-
-# 12. Default command: demo inference
-CMD ["conda","run","--no-capture-output","-n","mvxnet", \
-     "python","tools/test.py", \
-     "configs/sv3d-inf/mvxnet/trainval_config.py", \
-     "checkpoints/mvxnet.pkl", \
-     "--show","--show-dir","out","--show-score-thr","0.1"]
