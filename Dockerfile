@@ -93,8 +93,8 @@ RUN mkdir -p checkpoints \
     && /opt/conda/bin/conda run -n mvxnet gdown --fuzzy https://drive.google.com/uc?id=1dtTEuCzsj1I69vz6Hy2I6KZb515R-zoZ \
              -O checkpoints/mvxnet.pkl
 
-# Ensure conda environment activates on ssh login for root user
-RUN echo "\n# >>> conda initialize >>>" >> /root/.bashrc \
+RUN echo "" >> /root/.bashrc \
+    && echo "# >>> conda initialize >>>" >> /root/.bashrc \
     && echo "__conda_setup=\"$('/opt/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)\"" >> /root/.bashrc \
     && echo "if [ \$? -eq 0 ]; then" >> /root/.bashrc \
     && echo "    eval \"\$__conda_setup\"" >> /root/.bashrc \
@@ -107,6 +107,7 @@ RUN echo "\n# >>> conda initialize >>>" >> /root/.bashrc \
     && echo "fi" >> /root/.bashrc \
     && echo "unset __conda_setup" >> /root/.bashrc \
     && echo "conda activate mvxnet" >> /root/.bashrc
+
 
 # Expose SSH port
 EXPOSE 22
