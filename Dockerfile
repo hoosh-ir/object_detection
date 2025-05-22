@@ -1,40 +1,32 @@
-# -------------------------------------------------------------------------
-# MVXNet – DAIR-V2X-I (infrastructure) inference Dockerfile
-#   • CUDA 11.1.1 + cuDNN 8   • Ubuntu 20.04
-#   • Python 3 (system + venv) • PyTorch 1.9.0 + cu111
-#   • MMDetection3D fork (hoosh-ir)
-# -------------------------------------------------------------------------
 FROM nvidia/cuda:11.1.1-cudnn8-devel-ubuntu20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# 1. System deps + Python3 + OpenGL + SSH
+# Install prerequisites for adding PPA
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git wget curl ca-certificates \
+        software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y --no-install-recommends \
+        python3.7 python3.7-venv python3.7-dev python3.7-distutils \
+        python3-pip wget curl git ca-certificates \
         build-essential clang llvm libc++-dev ninja-build \
         libglib2.0-0 libsm6 libxext6 libxrender1 libgl1-mesa-glx \
-        openssh-server python3 python3-venv python3-pip \
+        openssh-server \
     && rm -rf /var/lib/apt/lists/*
 
-# 1a. SSH server setup
-RUN mkdir /var/run/sshd \
-    && echo 'root:root' | chpasswd \
-    && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
-    && sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
+# Use python3.7 explicitly
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1 \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 2 \
+    && update-alternatives --set python3 /usr/bin/python3.7
 
-# 2. Use bash for all subsequent RUN steps
-SHELL ["/bin/bash", "-lc"]
+# Upgrade pip for python3.7 explicitly
+RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
+    && python3.7 get-pip.py \
+    && rm get-pip.py
 
-# 3. Expose CUDA
-ENV CUDA_HOME=/usr/local/cuda \
-    PATH=${CUDA_HOME}/bin:${PATH} \
-    LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH} \
-    CPATH=${CUDA_HOME}/include:${CPATH} \
-    LIBRARY_PATH=${CUDA_HOME}/lib64:${LIBRARY_PATH}
-
-# 4. Create a Python virtualenv and install deep-learning stack
+# Create virtualenv with python3.7 explicitly
 ENV VENV_DIR=/opt/venv
-RUN python3 -m venv $VENV_DIR \
+RUN python3.7 -m venv $VENV_DIR \
     && source $VENV_DIR/bin/activate \
     && pip install --upgrade pip \
     && pip install --no-cache-dir \
@@ -50,6 +42,7 @@ RUN python3 -m venv $VENV_DIR \
         gdown \
     && deactivate
 
+
 # Put venv's python & scripts first in PATH
 ENV PATH=${VENV_DIR}/bin:${PATH}
 
@@ -61,7 +54,7 @@ ENV TORCH_CUDA_ARCH_LIST="6.0;6.1;7.0;7.5;8.0;8.6"
 
 # 6. Clone & install MVXNet (MMDetection3D fork)
 WORKDIR /workspace
-RUN git clone --depth 1 https://github.com/hoosh-ir/object_detection.git
+RUN git clone https://github.com/hoosh-ir/object_detection.git
 
 WORKDIR /workspace/object_detection
 RUN source $VENV_DIR/bin/activate \
