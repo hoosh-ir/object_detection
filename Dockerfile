@@ -8,12 +8,19 @@ FROM nvidia/cuda:11.1.1-cudnn8-devel-ubuntu20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# 1. System deps (runtime + build) + X/OpenGL
+# 1. System deps (runtime + build) + X/OpenGL + SSH server
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git wget curl ca-certificates \
         build-essential clang llvm libc++-dev ninja-build \
         libglib2.0-0 libsm6 libxext6 libxrender1 libgl1-mesa-glx \
+        openssh-server \
     && rm -rf /var/lib/apt/lists/*
+
+# Set up SSH server (create SSH directory and keys)
+RUN mkdir /var/run/sshd \
+    && echo 'root:root' | chpasswd \
+    && sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd
 
 # 2. Expose CUDA in conda shells and make its headers/libs visible
 ENV CUDA_HOME=/usr/local/cuda
@@ -84,3 +91,9 @@ RUN mkdir -p checkpoints \
 RUN apt-get purge -y build-essential clang llvm libc++-dev ninja-build \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
+
+# Expose SSH port
+EXPOSE 22
+
+# Start SSH server by default
+CMD ["/usr/sbin/sshd", "-D"]
