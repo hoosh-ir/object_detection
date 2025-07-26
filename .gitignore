@@ -32,3 +32,5 @@ example-cooperative-vehicle-infrastructure
 build
 pypcd
 mmdet3d.egg-info
+
+*.pth
