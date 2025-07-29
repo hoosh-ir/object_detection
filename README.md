@@ -6,13 +6,11 @@ This repo is based on **[DAIR-V2X](https://github.com/AIR-THU/DAIR-V2X)**, **[FF
 
 ### System Requirements
 
-1) ## LLVM C++ (For visualization in Open3D)
+1) LLVM C++ (For visualization in Open3D)
 
 ```bash
 sudo apt install libc++-dev
 ```
-
-2) CUDA Toolkit 11.1.0 ([Installation guild](https://developer.nvidia.com/cuda-11.1.0-download-archive))
 
 ### Create environment
 
@@ -45,31 +43,33 @@ sh scripts/download_checkpoints.sh
 The `online_inference_plugin` provides a simple API for running inference on custom LiDAR data using pre-trained models.
 
 #### Quick Start
+The following code is also provided in `infer_example.py`
 
 ```python
 from online_inference_plugin.inference_api import InferenceLidarAPI
 from online_inference_plugin.data import load_pcd
 
-# Initialize the inference API with a pre-trained model
-# Available models: "pointpillars", "second"
+# Create inference API. It can be slow, so we recommend to create it once and reuse it.
 inference_api = InferenceLidarAPI("pointpillars")
 
-# Load your point cloud data (.pcd format)
-lidar_data = load_pcd("path/to/your/pointcloud.pcd")
+# Load lidar data with any tool you want. It just needs to be a 4xN numpy array.
+lidar = load_pcd("example-cooperative-vehicle-infrastructure/infrastructure-side/velodyne/000009.pcd")
+# lidar = np.load("example-cooperative-vehicle-infrastructure/infrastructure-side/velodyne/000009.npy")
+# lidar = ...
 
-# Run inference
-results = inference_api(lidar_data, show=True)  # Set show=True for visualization
+# Run inference. For now, we only support lidar data.
+# If you want to visualize the result, set show=True.
+result = inference_api(lidar, show=True)
+print(result)
 ```
 
 #### Available Models
 
-1. **PointPillars** (`"pointpillars"`)
-   - Config: `configs/sv3d-inf/pointpillars/trainval_config.py`
-   - Checkpoint: `checkpoints/PointPillars.pth`
+1. **PointPillars**
 
-2. **SECOND** (`"second"`)
-   - Config: `configs/sv3d-inf/second/trainval_config.py`
-   - Checkpoint: `checkpoints/Second.pth`
+2. **SECOND**
+
+
    
 #### Output Format
 
@@ -91,4 +91,4 @@ This will display the point cloud with detected 3D bounding boxes overlaid.
 
 TODO:
 
-- [ ] Add training scripts and new weights stall
+- [ ] Add Image-only and fusion models.
