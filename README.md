@@ -1,8 +1,8 @@
 
 
-Code for inference on MVXNet model trained on [DAIR-V2X-I](https://thudair.baai.ac.cn/roadtest) (infrastructure-side 3d object detection)
+Code for inference on infrastructure model trained on [DAIR-V2X-I](https://thudair.baai.ac.cn/roadtest) (infrastructure-side 3d object detection)
 
-This repo is based on **[DAIR-V2X](https://github.com/AIR-THU/DAIR-V2X)**, **[FFNet-VIC3D](https://github.com/haibao-yu/FFNet-VIC3D)**, [mmdetection3d](https://github.com/open-mmlab/mmdetection3d) with almost no modifications:) 
+This repo is based on **[DAIR-V2X](https://github.com/AIR-THU/DAIR-V2X)**, **[FFNet-VIC3D](https://github.com/haibao-yu/FFNet-VIC3D)**, [mmdetection3d](https://github.com/open-mmlab/mmdetection3d). 
 
 ### System Requirements
 
@@ -19,6 +19,7 @@ sudo apt install libc++-dev
 ```bash
 conda create --name mvxnet python==3.7
 conda activate mvxnet
+conda install cudatoolkit==11.1.1
 pip install torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio==0.9.0 -f https://download.pytorch.org/whl/torch_stable.html
 pip install mmcv-full==1.3.14
 pip install mmdet==2.14.0
@@ -32,84 +33,62 @@ python setup.py install
 cd ..
 ```
 
-### Download pre-trained MVXNet for infrastructure data
+### Download pre-trained models for infrastructure data
 
 ```bash
 # install gdown with 'pip install gdown'
-gdown https://drive.google.com/file/d/1dtTEuCzsj1I69vz6Hy2I6KZb515R-zoZ/view?usp=sharing --fuzzy -O checkpoints/mvxnet.pkl
+sh scripts/download_checkpoints.sh
 ```
 
-### Inference on DAIV-V2I
+### Inference on Custom Dataset
 
-1) Download DAIR-V2X-Example from [here](https://drive.google.com/file/d/1y8bGwI63TEBkDEh2JU_gdV7uidthSnoe/view?usp=drive_link) and unzip:
+The `online_inference_plugin` provides a simple API for running inference on custom LiDAR data using pre-trained models.
 
-   ```bash
-   # install gdown with 'pip install gdown'
-   gdown https://drive.google.com/file/d/1y8bGwI63TEBkDEh2JU_gdV7uidthSnoe/view?usp=drive_link --fuzzy
-   unzip example-cooperative-vehicle-infrastructure.zip
-   ```
+#### Quick Start
 
-2)  Convert DAIR-V2I to KITTI-format data and prepare it for MMDet3D
+```python
+from online_inference_plugin.inference_api import InferenceLidarAPI
+from online_inference_plugin.data import load_pcd
 
-   ```bash
-   python tools/dataset_converter/dair2kitti.py --source-root example-cooperative-vehicle-infrastructure/infrastructure-side --target-root example-cooperative-vehicle-infrastructure/infrastructure-side --split-path ./data/dair-v2x/split_datas/example-single-infrastructure-split-data.json --label-type lidar --sensor-view infrastructure
+# Initialize the inference API with a pre-trained model
+# Available models: "pointpillars", "second"
+inference_api = InferenceLidarAPI("pointpillars")
+
+# Load your point cloud data (.pcd format)
+lidar_data = load_pcd("path/to/your/pointcloud.pcd")
+
+# Run inference
+results = inference_api(lidar_data, show=True)  # Set show=True for visualization
+```
+
+#### Available Models
+
+1. **PointPillars** (`"pointpillars"`)
+   - Config: `configs/sv3d-inf/pointpillars/trainval_config.py`
+   - Checkpoint: `checkpoints/PointPillars.pth`
+
+2. **SECOND** (`"second"`)
+   - Config: `configs/sv3d-inf/second/trainval_config.py`
+   - Checkpoint: `checkpoints/Second.pth`
    
-   # Prepare KITTI dataset for MMDet3d
-   python tools/create_data.py kitti --root-path example-cooperative-vehicle-infrastructure/infrastructure-side --out-dir example-cooperative-vehicle-infrastructure/infrastructure-side --extra-tag kitti
-   ```
+#### Output Format
 
-3) Run Inference
+The inference returns a list of detection results, where each result contains:
+- `boxes_3d`: 3D bounding boxes
+- `scores_3d`: Confidence scores
+- `labels_3d`: Object class labels
 
-   You can evaluate your model on the validation set by visualizing results or computing 3D detection metrics
+#### Visualization
 
-   ```bash
-   # visualize
-   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/mvxnet.pkl --show --show-dir out
-   # Compute metrics
-   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/mvxnet.pkl --eval bbox
-   ```
+Set `show=True` when calling the inference API to visualize results using Open3D:
 
-   * The first argument of the above commands is the config of mvxnet model and the second is the path to the downloaded pre-trained model.
+```python
+results = inference_api(lidar_data, show=True)
+```
 
-   **Inference on custom dataset**
+This will display the point cloud with detected 3D bounding boxes overlaid.
 
-1. Provide your data in KITTI format (see [here](https://s3.eu-central-1.amazonaws.com/avg-kitti/devkit_object.zip) and [here](https://mmdetection3d.readthedocs.io/en/v0.17.1/datasets/kitti_det.html)) like this:
-
-   ```pip install mmcv-full==1.3.14
-
-   ├── data
-   │   ├── kitti
-   │   │   ├── ImageSets
-   │   │   ├── testing
-   │   │   │   ├── calib
-   │   │   │   ├── image_2
-   │   │   │   ├── velodyne
-   │   │   ├── training
-   │   │   │   ├── calib
-   │   │   │   ├── image_2
-   │   │   │   ├── label_2
-   │   │   │   ├── velodyne
-   ```
-
-2.  Prepare KITTI dataset for MMDet3d
-
-   ```bash
-   # Prepare KITTI dataset for MMDet3d
-   python tools/create_data.py kitti --root-path {path-to-data} --out-dir {path-to-data} --extra-tag kitti
-   ```
-
-3. Change 'data_root' variable in ''configs/sv3d-inf/mvxnet/trainval_config.py'  to path to your dataset
-
-
-4) Run Inference
-
-   ```bash
-   # visualize
-   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/mvxnet.pkl --show --show-dir out
-   # Compute metrics
-   python tools/test.py configs/sv3d-inf/mvxnet/trainval_config.py checkpoints/mvxnet.pkl --eval bbox
-   ```
 
 TODO:
 
-- [ ] Add training scripts and new weights 
+- [ ] Add training scripts and new weights stall
