@@ -5,7 +5,7 @@ from online_inference_plugin.data import load_pcd
 inference_api = InferenceLidarAPI("pointpillars")
 
 # Load lidar data with any tool you want. It just needs to be a 4xN numpy array.
-lidar = load_pcd("example-cooperative-vehicle-infrastructure/infrastructure-side/velodyne/000009.pcd")
+lidar = load_pcd("online_inference_plugin/example_data_dairv2x_i/velodyne/000009.pcd")
 # lidar = np.load("example-cooperative-vehicle-infrastructure/infrastructure-side/velodyne/000009.npy")
 # lidar = ...
 
