@@ -34,3 +34,4 @@ pypcd
 mmdet3d.egg-info
 
 *.pth
+results/
