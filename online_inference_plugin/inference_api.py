@@ -5,7 +5,6 @@ from typing import List, Dict, Any, Union
 from mmdet3d.datasets.pipelines import Compose
 from mmdet3d.core.points import LiDARPoints
 from mmdet3d.core.bbox import get_box_type
-from mmdet3d.core.bbox.structures.box_3d_mode import Box3DMode
 import mmcv
 import torch
 from mmcv.parallel import collate, scatter
