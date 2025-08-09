@@ -17,7 +17,10 @@ class ModelInput:
         self.pipeline = Compose([p for p in pipeline if p['type'] not in ['LoadImageFromFile', 'LoadPointsFromFile']])
         self.multi_modal = config.input_modality.use_lidar and config.input_modality.use_camera
         # Get box type from config
-        self.box_type_3d, self.box_mode_3d = get_box_type(config.data.test.box_type_3d)
+        if config.input_modality.use_lidar:
+            self.box_type_3d, self.box_mode_3d = get_box_type(config.data.test.box_type_3d)
+        else:
+            self.box_type_3d, self.box_mode_3d = get_box_type("LiDAR")
     
     def get_model_input(self, lidar: np.ndarray = None, camera: np.ndarray = None, camera_intrinsic: np.ndarray = None, lidar_extrinsic: np.ndarray = None) -> Dict[str, Any]:
         """
@@ -37,6 +40,8 @@ class ModelInput:
             assert camera_intrinsic is not None and lidar_extrinsic is not None, "Multi-modal data is provided, but camera_intrinsic and lidar_extrinsic are not provided"
             lidar2img = camera_intrinsic @ lidar_extrinsic
             results['lidar2img'] = lidar2img
+        elif camera is not None:
+            assert camera_intrinsic is not None, "Camera data is provided, but camera_intrinsic is not provided"
         else:
             assert lidar is not None or camera is not None, "Either lidar or camera must be provided"
         
@@ -49,6 +54,8 @@ class ModelInput:
             results['img_shape'] = camera.shape
             results['ori_shape'] = camera.shape
             results['pad_shape'] = camera.shape
+
+            results['lidar2img'] = camera_intrinsic
 
         if lidar is not None:
             # Simulate output of LoadPointsFromFile pipeline
@@ -92,13 +99,7 @@ class ModelInput:
             # Scatter to specified GPU
             data = scatter(data, [device.index])[0]
         else:
-            # Extract data from DataContainer objects for CPU inference
-            if 'img_metas' in data:
-                data['img_metas'] = data['img_metas'][0].data
-            if 'points' in data:
-                data['points'] = data['points'][0].data
-            if 'img' in data:
-                data['img'] = data['img'][0].data
+            raise ValueError("CPU inference is not supported")
                 
         return data
     
@@ -113,7 +114,10 @@ def load_pcd(pcd_file_path):
 
     points_32 = np.transpose(np.vstack((np_x, np_y, np_z, np_i)))
     return points_32
-            
+
+def load_image(image_file_path):
+    image = mmcv.imread(image_file_path)
+    return image
             
             
 if __name__ == "__main__":

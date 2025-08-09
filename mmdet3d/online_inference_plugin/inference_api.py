@@ -11,20 +11,25 @@ from mmcv.parallel import collate, scatter
 from mmcv.runner import load_checkpoint
 from mmdet3d.models import build_model
 from mmdet3d.apis.inference import show_det_result_meshlab
+from .vis import show_proj_det_result_meshlab
 from copy import deepcopy
 import time
 import open3d as o3d
 from open3d import geometry
 
 
+
+
 model_to_config = {
     "pointpillars": "configs/sv3d-inf/pointpillars/trainval_config.py",
     "second": "configs/sv3d-inf/second/trainval_config.py",
+    "imvoxelnet": "configs/sv3d-inf/imvoxelnet/trainval_config.py",
 }
 
 model_to_checkpoint = {
     "pointpillars": "checkpoints/PointPillars.pth",
     "second": "checkpoints/Second.pth",
+    "imvoxelnet": "checkpoints/ImVoxelNet.pth",
 }
 
 
@@ -54,7 +59,6 @@ class InferenceLidarAPI:
         
         data = self.model_input.get_model_input(lidar=lidar)  
         model_data = self.model_input.prepare_for_model(data, self.model)
-        
          # Run inference
         with torch.no_grad():
             result = self.model(return_loss=False, rescale=True, **model_data)
@@ -67,3 +71,25 @@ class InferenceLidarAPI:
         """Original visualization method using the standard implementation."""
         show_det_result_meshlab(model_data, result, "results", show=True, score_thr=score_thr)
    
+
+class InferenceCameraAPI(InferenceLidarAPI):
+    def __init__(self, model_name: str):
+        super().__init__(model_name)
+        
+    def __call__(self, image, intrinsic):
+        data = self.model_input.get_model_input(camera=image, camera_intrinsic=intrinsic)
+        model_data = self.model_input.prepare_for_model(data, self.model)
+        
+        with torch.no_grad():
+            result = self.model(return_loss=False, rescale=True, **model_data)
+        print("Inference completed successfully!")
+        
+        result[0]['original_img'] = image
+        return result, model_data
+    
+    
+    def visualize(self, model_data, result, score_thr=0.0):
+        show_proj_det_result_meshlab(model_data, result, "results", show=True, score_thr=score_thr)
+    
+    
+    
