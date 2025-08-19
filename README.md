@@ -46,8 +46,8 @@ The `online_inference_plugin` provides a simple API for running inference on cus
 The following code is also provided in `infer_example.py`
 
 ```python
-from online_inference_plugin.inference_api import InferenceLidarAPI
-from online_inference_plugin.data import load_pcd
+from mmdet3d.online_inference_plugin.inference_api import InferenceLidarAPI
+from mmdet3d.online_inference_plugin.data import load_pcd
 import numpy as np
 
 def rotate_shift_lidar(lidar, pitch_angle=5.0, shift_z_up=2.5):
