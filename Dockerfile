@@ -3,8 +3,11 @@ FROM nvidia/cuda:11.1.1-cudnn8-devel-ubuntu20.04
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
+# Ensure CUDA paths are visible during build (no GPU required at build time)
+ENV CUDA_HOME=/usr/local/cuda
+ENV FORCE_CUDA=1
 
-# Set working directory
+# Set default working directory
 WORKDIR /app
 
 # Install system dependencies
@@ -20,6 +23,8 @@ RUN apt-get update && apt-get install -y \
     wget \
     curl \
     build-essential \
+    ninja-build \
+    ca-certificates \
     libc++-dev \
     libgl1-mesa-glx \
     libglib2.0-0 \
@@ -43,19 +48,10 @@ RUN python -m pip install --upgrade pip
 RUN pip install torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio==0.9.0 -f https://download.pytorch.org/whl/torch_stable.html
 
 # Install MMDetection dependencies
-RUN pip install mmcv-full==1.3.14 -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9.0/index.html
+ENV TORCH_CUDA_ARCH_LIST="7.0;7.5;8.0;8.6"
+RUN pip install mmcv-full==1.3.14 -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.9.0/index.html --trusted-host download.openmmlab.com
 RUN pip install mmdet==2.14.0
 RUN pip install mmsegmentation==0.14.1
-
-# Install additional ML dependencies
-RUN pip install open3d==0.11
-RUN pip install scikit-image
-RUN pip install tensorboard
-RUN pip install trimesh==2.35.39
-RUN pip install networkx==2.2
-RUN pip install numba==0.48.0
-RUN pip install "numpy<1.20.0"
-RUN pip install plyfile
 
 # Install pypcd for point cloud loading
 RUN git clone https://github.com/klintan/pypcd.git /tmp/pypcd && \
@@ -66,17 +62,19 @@ RUN git clone https://github.com/klintan/pypcd.git /tmp/pypcd && \
 # Install FastAPI and related dependencies
 RUN pip install fastapi uvicorn
 
-# Copy project files
-COPY . /app/
+# Clone project repository
+ARG REPO_URL=https://github.com/hoosh-ir/object_detection
+ARG REPO_REF=main
+RUN git clone --branch ${REPO_REF} --depth 1 ${REPO_URL} /app
 
 # Install the project in development mode
-RUN pip install -e . --user
+RUN pip install -e .
 
 # Create necessary directories
 RUN mkdir -p /tmp /app/results
 
-# Download pre-trained models
-RUN bash scripts/download_checkpoints.sh
+# Install gdown (required by checkpoint download script) and download pre-trained models
+RUN pip install gdown && bash scripts/download_checkpoints.sh
 
 # Set environment variables
 ENV PYTHONPATH=/app:$PYTHONPATH
