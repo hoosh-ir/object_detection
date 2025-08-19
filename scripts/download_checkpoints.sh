@@ -1,5 +1,5 @@
 # ImVoxelNet for Image-based 3D Object Detection
-#gdown https://drive.google.com/file/d/1nrUjGVD-DHEBYhCOrRrIT37hsqgHhWRF/view?usp=share_link --fuzzy -O checkpoints/ImVoxelNet.pth
+gdown https://drive.google.com/file/d/1nrUjGVD-DHEBYhCOrRrIT37hsqgHhWRF/view?usp=share_link --fuzzy -O checkpoints/ImVoxelNet.pth
 
 # MVXNet for Fusion-based 3D Object Detection
 #gdown https://drive.google.com/file/d/1dtTEuCzsj1I69vz6Hy2I6KZb515R-zoZ/view?usp=sharing --fuzzy -O checkpoints/MVXNet.pth

@@ -26,7 +26,7 @@ def rotate_shift_lidar(lidar, pitch_angle=5.0, shift_z_up=2.5):
 inference_api = InferenceLidarAPI("pointpillars")
 
 # Load lidar data with any tool you want. It just needs to be a 4xN numpy array.
-lidar = load_pcd("online_inference_plugin/example_data_dairv2x_i/velodyne/000009.pcd")
+lidar = load_pcd("mmdet3d/online_inference_plugin/example_data_dairv2x_i/velodyne/000009.pcd")
 #lidar = np.load("_lidar3/_lidar3_1752394146165657614_000000.npy").astype(np.float32)
 print(lidar.shape)
 # lidar = ...

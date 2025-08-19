@@ -1,5 +1,5 @@
-from online_inference_plugin.data import load_image
-from online_inference_plugin.inference_api import InferenceCameraAPI
+from mmdet3d.online_inference_plugin.data import load_image
+from mmdet3d.online_inference_plugin.inference_api import InferenceCameraAPI
 import numpy as np
 
 
