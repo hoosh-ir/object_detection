@@ -1,3 +1,5 @@
+
+
 ## Options to run
 
 - Docker-based (recommended): Run a ready-to-use FastAPI server with GPU support. See: [Docker-based Inference (Quickstart)](#docker-based-inference-quickstart)
@@ -7,33 +9,91 @@
 
 Get the API running with Docker and try inference in minutes.
 
-### Options (flags)
 
-- `--port PORT`: Host port to expose the API (default: 8000). You can also export `PORT`.
-- `--gpu ID`: GPU device ID to use (default: 0). You can also export `GPU_DEVICE`.
-
-Example:
+#### Option 1: Using the convenience script (Recommended)
 
 ```bash
-./run_docker.sh run --port 8080 --gpu 1
+# Build and run the service
+./run_docker.sh run
+
+# Check service health
+./run_docker.sh health
+
+# View logs
+./run_docker.sh logs
+
+# Stop the service
+./run_docker.sh stop
 ```
 
-### Build and Run
+#### Option 2: Using Docker directly
 
 ```bash
-./run_docker.sh run --port 8000 --gpu 0
+# Build the Docker image
+docker build -t object-detection-api .
+
+# Run the container (requires NVIDIA GPU)
+docker run --gpus all -p 8000:8000 object-detection-api
 ```
 
-- API: http://localhost:8000
-- Docs: http://localhost:8000/docs
-- Health: http://localhost:8000/health or `./run_docker.sh health`
 
-### Test Quickly
+### API Usage
 
+Once the service is running, you can access:
+- Health Check: http://localhost:8000/health
+- LiDAR Inference: POST http://localhost:8000/inference/lidar
+- Image Inference: POST http://localhost:8000/inference/image
+
+### Example API Calls
+
+The API only accepts numpy arrays as base64 encoded JSON data (no file uploads).
+
+#### LiDAR Inference
 ```bash
-# Send sample numpy arrays to both endpoints
+curl -X POST "http://localhost:8000/inference/lidar" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_name": "pointpillars",
+    "score_threshold": 0.3,
+    "lidar_data_base64": "YOUR_BASE64_ENCODED_LIDAR_DATA"
+  }'
+```
+
+#### Image Inference
+```bash
+curl -X POST "http://localhost:8000/inference/image" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_name": "imvoxelnet",
+    "score_threshold": 0.3,
+    "camera_intrinsic": [[2186.359688, 0.0, 968.712906], [0.0, 2332.160319, 542.356703], [0.0, 0.0, 1.0]],
+    "image_data_base64": "YOUR_BASE64_ENCODED_IMAGE_DATA",
+    "image_shape": [480, 640, 3]
+  }'
+```
+
+#### Test with Sample Data
+```bash
+# Test the API with randomly generated numpy arrays
 python test_numpy_api.py
 ```
+
+### Available Models
+
+**LiDAR Models:**
+- `pointpillars` - PointPillars model for LiDAR object detection
+- `second` - SECOND model for LiDAR object detection
+
+**Image Models:**
+- `imvoxelnet` - ImVoxelNet model for image-based object detection
+
+### Requirements
+
+- NVIDIA GPU with CUDA 11.1+ support
+- Docker with NVIDIA Container Runtime
+- At least 8GB GPU memory recommended
+
+For more examples, see `client_example.py` and `test_numpy_api.py`.
 
 ### Use the Client with Your Data
 
@@ -49,12 +109,7 @@ python client_example.py --mode image \
   --model imvoxelnet --threshold 0.3
 ```
 
-### Manage the Container
 
-```bash
-./run_docker.sh logs
-./run_docker.sh stop
-```
 
 ### Commands explained (`run_docker.sh`)
 
@@ -78,11 +133,9 @@ Notes:
 - First build will download checkpoints via `scripts/download_checkpoints.sh`.
 
 
+## Manual Installation (Development)
 
-Code for inference on infrastructure model trained on [DAIR-V2X-I](https://thudair.baai.ac.cn/roadtest) (infrastructure-side 3d object detection)
-
-This repo is based on **[DAIR-V2X](https://github.com/AIR-THU/DAIR-V2X)**, **[FFNet-VIC3D](https://github.com/haibao-yu/FFNet-VIC3D)**, [mmdetection3d](https://github.com/open-mmlab/mmdetection3d). 
-
+If you prefer to run the code without Docker:
 ### System Requirements
 
 1) LLVM C++ (For visualization in Open3D)
@@ -199,144 +252,6 @@ results = inference_api(lidar_data, show=True)
 This will display the point cloud with detected 3D bounding boxes overlaid.
 
 
-## Docker API Service
-
-This project now includes a Docker-based FastAPI service that supports both LiDAR and Image inference modes. The service provides RESTful endpoints for easy integration into web applications or microservices architectures.
-
-### Quick Start with Docker
-
-#### Option 1: Using the convenience script (Recommended)
-
-```bash
-# Build and run the service
-./run_docker.sh run
-
-# Check service health
-./run_docker.sh health
-
-# View logs
-./run_docker.sh logs
-
-# Stop the service
-./run_docker.sh stop
-```
-
-#### Option 2: Using Docker directly
-
-```bash
-# Build the Docker image
-docker build -t object-detection-api .
-
-# Run the container (requires NVIDIA GPU)
-docker run --gpus all -p 8000:8000 object-detection-api
-```
-
-#### Option 3: Using Docker Compose
-
-```bash
-# Build and run with docker-compose
-docker-compose up --build
-
-# Run in background
-docker-compose up -d --build
-```
-
-### API Usage
-
-Once the service is running, you can access:
-- API Documentation: http://localhost:8000/docs
-- Health Check: http://localhost:8000/health
-- LiDAR Inference: POST http://localhost:8000/inference/lidar
-- Image Inference: POST http://localhost:8000/inference/image
-
-### Example API Calls
-
-The API only accepts numpy arrays as base64 encoded JSON data (no file uploads).
-
-#### LiDAR Inference
-```bash
-curl -X POST "http://localhost:8000/inference/lidar" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model_name": "pointpillars",
-    "score_threshold": 0.3,
-    "lidar_data_base64": "YOUR_BASE64_ENCODED_LIDAR_DATA"
-  }'
-```
-
-#### Image Inference
-```bash
-curl -X POST "http://localhost:8000/inference/image" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model_name": "imvoxelnet",
-    "score_threshold": 0.3,
-    "camera_intrinsic": [[2186.359688, 0.0, 968.712906], [0.0, 2332.160319, 542.356703], [0.0, 0.0, 1.0]],
-    "image_data_base64": "YOUR_BASE64_ENCODED_IMAGE_DATA",
-    "image_shape": [480, 640, 3]
-  }'
-```
-
-#### Test with Sample Data
-```bash
-# Test the API with randomly generated numpy arrays
-python test_numpy_api.py
-```
-
-### Available Models
-
-**LiDAR Models:**
-- `pointpillars` - PointPillars model for LiDAR object detection
-- `second` - SECOND model for LiDAR object detection
-
-**Image Models:**
-- `imvoxelnet` - ImVoxelNet model for image-based object detection
-
-### Requirements
-
-- NVIDIA GPU with CUDA 11.1+ support
-- Docker with NVIDIA Container Runtime
-- At least 8GB GPU memory recommended
-
-For more examples, see `client_example.py` and `test_numpy_api.py`.
-
-## Manual Installation (Development)
-
-If you prefer to run the code without Docker:
-
-### System Requirements
-
-1) LLVM C++ (For visualization in Open3D)
-
-```bash
-sudo apt install libc++-dev
-```
-
-### Create environment
-
-```bash
-conda create --name mvxnet python==3.7
-conda activate mvxnet
-conda install cudatoolkit==11.1.1
-pip install torch==1.9.0+cu111 torchvision==0.10.0+cu111 torchaudio==0.9.0 -f https://download.pytorch.org/whl/torch_stable.html
-pip install mmcv-full==1.3.14
-pip install mmdet==2.14.0
-pip install mmsegmentation==0.14.1
-cd object_detection
-pip install -e . --user
-pip install open3d==0.11
-git clone https://github.com/klintan/pypcd.git
-cd pypcd
-python setup.py install
-cd ..
-```
-
-### Download pre-trained models for infrastructure data
-
-```bash
-# install gdown with 'pip install gdown'
-sh scripts/download_checkpoints.sh
-```
 
 TODO:
 
