@@ -59,6 +59,9 @@ RUN git clone https://github.com/klintan/pypcd.git /tmp/pypcd && \
     python setup.py install && \
     rm -rf /tmp/pypcd
 
+# Install Open3D for visualization (as per README)
+RUN pip install open3d==0.11
+
 # Install FastAPI and related dependencies
 RUN pip install fastapi uvicorn
 
