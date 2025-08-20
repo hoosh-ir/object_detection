@@ -1,3 +1,82 @@
+## Options to run
+
+- Docker-based (recommended): Run a ready-to-use FastAPI server with GPU support. See: [Docker-based Inference (Quickstart)](#docker-based-inference-quickstart)
+- Run yourself (development): Create a local Python environment and run the code directly. See: [Manual Installation (Development)](#manual-installation-development)
+
+## Docker-based Inference (Quickstart)
+
+Get the API running with Docker and try inference in minutes.
+
+### Options (flags)
+
+- `--port PORT`: Host port to expose the API (default: 8000). You can also export `PORT`.
+- `--gpu ID`: GPU device ID to use (default: 0). You can also export `GPU_DEVICE`.
+
+Example:
+
+```bash
+./run_docker.sh run --port 8080 --gpu 1
+```
+
+### Build and Run
+
+```bash
+./run_docker.sh run --port 8000 --gpu 0
+```
+
+- API: http://localhost:8000
+- Docs: http://localhost:8000/docs
+- Health: http://localhost:8000/health or `./run_docker.sh health`
+
+### Test Quickly
+
+```bash
+# Send sample numpy arrays to both endpoints
+python test_numpy_api.py
+```
+
+### Use the Client with Your Data
+
+```bash
+# LiDAR (.npy with shape [N,4])
+python client_example.py --mode lidar \
+  --file /absolute/path/to/points.npy \
+  --model pointpillars --threshold 0.3
+
+# Image
+python client_example.py --mode image \
+  --file /absolute/path/to/image.jpg \
+  --model imvoxelnet --threshold 0.3
+```
+
+### Manage the Container
+
+```bash
+./run_docker.sh logs
+./run_docker.sh stop
+```
+
+### Commands explained (`run_docker.sh`)
+
+- build: Build the Docker image. If `checkpoints/` is empty, runs `scripts/download_checkpoints.sh` first.
+  - Example: `./run_docker.sh build`
+- run: Build if needed and start the container with GPU, expose `PORT:8000`, mount `./results -> /app/results`.
+  - Example: `./run_docker.sh run --port 8000 --gpu 0`
+- stop: Stop and remove the running container.
+  - Example: `./run_docker.sh stop`
+- logs: Stream container logs (Ctrl+C to exit).
+  - Example: `./run_docker.sh logs`
+- shell: Open an interactive bash shell inside the running container.
+  - Example: `./run_docker.sh shell`
+- clean: Stop container (if any) and remove the image.
+  - Example: `./run_docker.sh clean`
+- health: Check `GET /health` and pretty-print the response.
+  - Example: `./run_docker.sh health`
+
+Notes:
+- Requires NVIDIA GPU and NVIDIA Container Runtime.
+- First build will download checkpoints via `scripts/download_checkpoints.sh`.
+
 
 
 Code for inference on infrastructure model trained on [DAIR-V2X-I](https://thudair.baai.ac.cn/roadtest) (infrastructure-side 3d object detection)
@@ -43,7 +122,7 @@ sh scripts/download_checkpoints.sh
 The `online_inference_plugin` provides a simple API for running inference on custom LiDAR data using pre-trained models.
 
 #### Quick Start
-The following code is also provided in `infer_example.py`
+The following code is also provided in `single_point_infer_example.py`
 
 ```python
 from mmdet3d.online_inference_plugin.inference_api import InferenceLidarAPI
@@ -219,7 +298,7 @@ python test_numpy_api.py
 - Docker with NVIDIA Container Runtime
 - At least 8GB GPU memory recommended
 
-For detailed API usage instructions, see [API_USAGE.md](API_USAGE.md)
+For more examples, see `client_example.py` and `test_numpy_api.py`.
 
 ## Manual Installation (Development)
 
